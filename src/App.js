@@ -1,9 +1,30 @@
-import { useState,useEffect } from 'react';
+import React,{ useState,useEffect } from 'react';
 import './App.css';
-
-//Importing Components
+import axios from "axios";
 import Form from "./components/Form";
 import TodoList from './components/TodoList';
+
+const API_URL = "http://localhost:3000/api/v1/todo_lists/";
+
+function getAPIData() {
+  return axios.get(API_URL).then((response) => response.data)
+}
+
+function setAPIData(todo) {
+  return axios.post(API_URL, { todo_list: { todo_item: todo, completed: false, } }).then((response) => response.data);
+}
+
+function updateAPIData(updatedText,todo) {
+  return axios.patch(API_URL + todo.id, { todo_list: { todo_item: updatedText, completed: todo.completed, } }).then((response) => response.data);
+}
+
+function deleteTodo(todo) {
+  return axios.delete(API_URL + todo.id, { todo_list: { id: todo.id } }).then((response) => response.data);
+}
+
+function completeTodo(todo) {
+  return axios.patch(API_URL + todo.id, { todo_list: { completed: !todo.completed } }).then((response) => response.data);
+}
 
 function App() {
   const [inputText, setInputText] = useState("");
@@ -12,32 +33,18 @@ function App() {
   const [filteredTodos, setFilteredTodos] = useState([]);
 
   useEffect(() => {
-    filterHandler();
-  }, [todos, status]);
+    let mounted = true
+    getAPIData().then((items) => {
+      if (mounted) {
+        setTodos(items);
+      }
+    });
+    return () => (mounted = false);
+  }, []);
 
   useEffect(() => {
-    const todosString = localStorage.getItem("todos");
-    if (todosString) {
-        const todos = JSON.parse(todosString);
-        setTodos([ 
-          ...todos, {text: inputText, completed: false, id:Math.random() * 1000 },
-        ]);
-    }
-
-    function storageEventHandler(event) {
-        if (event.key === "todos") {
-            const todos = JSON.parse(event.newValue);
-            setTodos([ 
-              ...todos, {text: inputText, completed: false, id:Math.random() * 1000 },
-            ]);
-        }
-    }
-  
-    window.addEventListener("storage", storageEventHandler);
-    return () => {
-        window.removeEventListener("storage", storageEventHandler);
-    };
-}, []);
+    filterHandler();
+  }, [todos, status]);
   
   const filterHandler = () => {
     switch (status) {
@@ -57,13 +64,22 @@ function App() {
       <header>
         <h1>Sowndar's Todo List</h1>         
       </header> 
+      
       <Form inputText = {inputText} 
+            setInputText = {setInputText} 
             todos = {todos} 
             setTodos = {setTodos} 
-            setInputText = {setInputText} 
             setStatus = {setStatus}
+            setAPIData={setAPIData}
       />
-      <TodoList  filteredTodos = {filteredTodos} setTodos={setTodos} todos={todos} />
+      <TodoList  filteredTodos = {filteredTodos}
+                 setTodos={setTodos} 
+                 todos={todos}
+                 deleteTodo={deleteTodo} 
+                 completeTodo={completeTodo} 
+                 setAPIData={setAPIData} 
+                 updateAPIData={updateAPIData}  
+      />
     </div>
   );
 }

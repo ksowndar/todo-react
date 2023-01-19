@@ -1,19 +1,17 @@
-import { useEffect } from 'react';
-const Form = ({ setInputText, todos, setTodos, inputText, setStatus }) => {
+import React from 'react';
+
+const Form = ({ setInputText, todos, setTodos, setAPIData, inputText, setStatus }) => {
     const inputTextHandler = (e) => {
-        console.log(e.target.value);
-        setInputText(e.target.value);
+      setInputText(e.target.value);
     }
-   
-    const submitTodoHandler = (e) => {
-        
+    const submitTodoHandler = (e) => { 
         e.preventDefault();
         setTodos([ 
-          ...todos, {text: inputText, completed: false, id:Math.random() * 1000 },
-        ]);
-        setInputText("");
-       
-    };
+          ...todos, {todo_item: inputText, completed: false, id:Math.random() * 1000 },
+        ])
+        setAPIData(inputText);
+        setInputText("");      
+    }
     const statusHandler = (e) => {
         setStatus(e.target.value);
     }
